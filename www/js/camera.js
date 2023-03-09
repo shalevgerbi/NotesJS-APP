@@ -33,16 +33,16 @@ async function sendPicture(data) {
 
     const buttons = document.querySelector('#buttons')
     const loading = document.createElement('h1')
-    loading.textContent = 'Loading...' 
-    buttons.insertBefore(loading,buttons.firstChild)
+    loading.textContent = 'Loading...'
+    buttons.insertBefore(loading, buttons.firstChild)
     const isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1;
-    if (isAndroid){
-    res = await fetch('http://d4e9-77-137-194-196.ngrok.io/predict', {
-        "method": "POST",
-        "body": encodedData,
-    })
+    if (isAndroid) {
+        res = await fetch('http://ff7a-77-137-194-196.ngrok.io/predict', {
+            "method": "POST",
+            "body": encodedData,
+        })
     }
-    else{
+    else {
         res = await fetch('http://localhost:5000/predict', {
             "method": "POST",
             "body": encodedData,
@@ -62,16 +62,15 @@ async function sendPicture(data) {
     localStorage.setItem("data", data)
     const form = document.createElement("form")
     form.action = "../midi.html";
-    form.className='button-black'
+    form.className = 'button-black'
     const input = document.createElement("input")
     input.type = "submit"
     input.value = "go to midi page"
     input.className = 'button-black'
     form.appendChild(input)
-    // buttons.appendChild(form)
     buttons.removeChild(loading)
-    buttons.insertBefore(form,buttons.firstChild)
-    
+    buttons.insertBefore(form, buttons.firstChild)
+
 }
 
 //////////////////////////////////////////////////////
@@ -109,8 +108,6 @@ image.onload = function () {
     canvas.width = image.width;
     canvas.height = image.height;
 };
-// var bgCanvas = document.createElement('canvas');
-// var bgCtx = bgCanvas.getContext('2d');
 function takePicture() {
     const canvas = document.getElementById("cropCanvas");
     const ctx = canvas.getContext("2d");
@@ -123,8 +120,8 @@ function takePicture() {
     backupCanvas.height = height;
     backupCtx.drawImage(output, 0, 0);
 
-    // ctx.drawImage(video, 0, 0, width, height);
-    
+
+
     ctx.save();
 
     const aspectRatio = width / height;
@@ -133,11 +130,11 @@ function takePicture() {
     const maxWidth = 900;
     const maxHeight = 500;
     if (width > height) {
-      newWidth = Math.min(width, maxWidth);
-      newHeight = newWidth / aspectRatio;
+        newWidth = Math.min(width, maxWidth);
+        newHeight = newWidth / aspectRatio;
     } else {
-      newHeight = Math.min(height, maxHeight);
-      newWidth = newHeight * aspectRatio;
+        newHeight = Math.min(height, maxHeight);
+        newWidth = newHeight * aspectRatio;
     }
     resizeHeight = height / newHeight;
     resizeWidth = width / newWidth;
@@ -221,7 +218,7 @@ function invertColors(pixels) {
         pixels[i + 2] = pixels[i + 2] ^ 255; // Invert Blue
     }
 }
-// from https://github.com/processing/p5.js/blob/main/src/image/filters.js
+
 function dilate(pixels, canvas) {
     let currIdx = 0;
     const maxIdx = pixels.length ? pixels.length / 4 : 0;
@@ -307,20 +304,19 @@ function preprocessImage(canvas) {
     const numOfBrightPixels = checkIfDilate(canvas);
     let level = 0.58 //0.6
     let radius = 1; //1
-    if(numOfBrightPixels > 0.7){
+    if (numOfBrightPixels > 0.7) {
         return;
     }
-    // blurARGB(processedImageData.data, canvas, radius = radius);
+
     canvas.getContext('2d').putImageData(processedImageData, 0, 0);
-    if(numOfBrightPixels < 0.7) {
+    if (numOfBrightPixels < 0.7) {
         dilate(processedImageData.data, canvas);
         canvas.getContext('2d').putImageData(processedImageData, 0, 0);
     }
-    else{
+    else {
         level = 0.75
     }
-    // invertColors(processedImageData.data);
-    // canvas.getContext('2d').putImageData(processedImageData,0,0);
+
     thresholdFilter(processedImageData.data, level = level);
     canvas.getContext('2d').putImageData(processedImageData, 0, 0);
     return processedImageData;
@@ -401,7 +397,6 @@ let blurKernelSize;
 let blurKernel;
 let blurMult;
 
-// from https://github.com/processing/p5.js/blob/main/src/image/filters.js
 function buildBlurKernel(r) {
     let radius = (r * 3.5) | 0;
     radius = radius < 1 ? 1 : radius < 248 ? radius : 248;
@@ -435,7 +430,6 @@ function buildBlurKernel(r) {
     }
 }
 
-// from https://github.com/processing/p5.js/blob/main/src/image/filters.js
 function blurARGB(pixels, canvas, radius) {
     const width = canvas.width;
     const height = canvas.height;
@@ -535,30 +529,10 @@ canvas.addEventListener("click", function (event) {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     ctx.fillRect(x, y, 5, 5);
-    const middleHorizontal = canvas.height / 2
-    const middleVertical = canvas.width / 2
-    // if (y < middleHorizontal) {
-    //     if (x < middleVertical) {
-    //         if (positions.topLeft === null)
-    //             positions.topLeft = { x: x, y: y }
-    //     }
-    //     else if (positions.topRight === null) {
-    //             positions.topRight = { x: x, y: y }
-    //     }
-    // }
-    // else if (x < middleVertical) {
-    //         if (positions.bottomLeft === null)
-    //             positions.bottomLeft = { x: x, y: y }
-
-    //     else if (positions.bottomRight === null) {
-    //             positions.bottomRight = { x: x, y: y }
-    //     }
-    // }
     clicks.push({ x: x * resizeWidth, y: y * resizeHeight });
 
     if (clicks.length >= 4) {
         // Replace the corrupted canvas with the bgcanvas
-
         for (let prop in positions) {
             if (positions.hasOwnProperty(prop) && positions[prop] === null) {
                 findPositions2(clicks)
@@ -566,7 +540,6 @@ canvas.addEventListener("click", function (event) {
             }
         }
         // Draw the polygon
-        // positions = findPolygonCorners(clicks)
         ctx.save()
         ctx.beginPath();
         ctx.moveTo(positions.topLeft.x, positions.topLeft.y);
@@ -582,23 +555,14 @@ canvas.addEventListener("click", function (event) {
         // Create a new canvas with the desired dimensions
         const croppedCanvas = document.createElement('canvas');
         const croppedCtx = croppedCanvas.getContext('2d');
-        // croppedCanvas.width = positions.topRight.x - positions.topLeft.x;
-        // croppedCanvas.height = positions.bottomLeft.y - positions.topLeft.y;
         croppedCanvas.width = positions.topRight.x - positions.bottomRight.x;
         croppedCanvas.height = positions.bottomRight.y - positions.topLeft.y;
-        // bgCanvas.width = croppedCanvas.width;
-        // bgCanvas.height = croppedCanvas.height;
-
         const output = document.getElementById('img');
 
         if (output.src)
             croppedCtx.drawImage(output, positions.topLeft.x, positions.topLeft.y, croppedCanvas.width, croppedCanvas.height, 0, 0, croppedCanvas.width, croppedCanvas.height);
         else
             croppedCtx.drawImage(video, positions.topLeft.x, positions.topLeft.y, croppedCanvas.width, croppedCanvas.height, 0, 0, croppedCanvas.width, croppedCanvas.height);
-
-        // bgCtx.drawImage(video,positions.topLeft.x,positions.topLeft.y,croppedCanvas.width,croppedCanvas.height,  0, 0, croppedCanvas.width, croppedCanvas.height)
-        // Draw the part of the original canvas that we want to keep onto the new canvas
-        // ctx.clearRect(positions.topLeft.x, positions.topLeft.y, croppedCanvas.width, croppedCanvas.height);
 
         // Replace the original canvas with the cropped canvas
         canvas.parentNode.replaceChild(croppedCanvas, canvas);

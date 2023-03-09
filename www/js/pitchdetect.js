@@ -19,9 +19,9 @@ var detectorElem,
 var MAX_SIZE
 var lastItem
 var soundPath = '../audio/littleY.wav'
-let barFlag=0;
+let barFlag = 0;
 let model;
-const rhytmArr=[]
+const rhytmArr = []
 const notesArr = []
 const pitchArr = []
 const octaveArr = []
@@ -100,10 +100,10 @@ window.onload = function () {
   audioContext = new AudioContext()
   sampleRate = audioContext.sampleRate
   MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000)) // corresponds to a 5kHz signal
-  
+
   detectorElem = document.getElementById('detector')
   DEBUGCANVAS = document.getElementById('waveform')
-  
+
   if (DEBUGCANVAS) {
     waveCanvas = DEBUGCANVAS.getContext('2d')
     waveCanvas.strokeStyle = 'black'
@@ -131,7 +131,7 @@ window.onload = function () {
     theBuffer = null
 
     var reader = new FileReader()
-    
+
     reader.onload = function (event) {
       audioContext.decodeAudioData(
         event.target.result,
@@ -147,9 +147,9 @@ window.onload = function () {
     reader.onerror = function (event) {
       alert('Error: ' + reader.error)
     }
-    
+
     reader.readAsArrayBuffer(e.dataTransfer.files[0])
-    
+
     return false
   }
 
@@ -161,29 +161,17 @@ window.onload = function () {
       return response.arrayBuffer()
     })
     .then((buffer) => audioContext.decodeAudioData(buffer)
-    
+
     )
     .then((decodedData) => {
       theBuffer = decodedData
     })
 }
 
-// =============================MACHINE LEARNING============= //
-
-// loadModel().then(() => console.log("loaded"))
-async function loadModel(){
-  // tf.serilization.registerClass(CTCLayer);
-  // model = tf.keras.models.load_model('my_model.h5', custom_objects={'CTClayer': CTCLayer})
-  // model = await tf.loadLayersModel('./model/modeljs/model.json');
-  console.log("model loaded")
-}
-
-// ============================================================ //
-
-function noteToLocation(note, pitch,octave) {
-  let rotate = isRotate(pitch,octave)
-  let start=-7;
-  if(rotate && octave == 3){
+function noteToLocation(note, pitch, octave) {
+  let rotate = isRotate(pitch, octave)
+  let start = -7;
+  if (rotate && octave == 3) {
     start = -101
   } else if (!rotate && octave == 4) {
     start = -7
@@ -196,7 +184,7 @@ function noteToLocation(note, pitch,octave) {
   let location = start
   let finalLocation
   let labels = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
-  
+
   labels.map((label) => {
     if (pitch.includes(label)) {
       finalLocation = location.toFixed()
@@ -211,35 +199,33 @@ let index = 0;
 var notesLength = localStorage.getItem('notesLength') ? Number(localStorage.getItem('notesLength')) : null
 
 async function startPitchDetect() {
-  
-  for(let i=0; i < onlyNotes.length ;i++){
-    
-    if(String(onlyNotes[i].note).includes('rest')){
+
+  for (let i = 0; i < onlyNotes.length; i++) {
+
+    if (String(onlyNotes[i].note).includes('rest')) {
       const element = document.getElementById(index);
       element.style.backgroundColor = 'green'
       index++;
     }
-    else if(String(onlyNotes[i].note).includes('barline')){
+    else if (String(onlyNotes[i].note).includes('barline')) {
       continue;
     }
-    else{
+    else {
       break;
     }
-  
+
   }
 
   let buttonText = document.getElementById('live').textContent;
-  
-  if(buttonText !== 'Start Live Recording'){
+
+  if (buttonText !== 'Start Live Recording') {
     lastItem = true
-    // sourceNode.stop(0)
     sourceNode = null
     analyser = null
     isPlaying = false
     if (!window.cancelAnimationFrame)
       window.cancelAnimationFrame = window.webkitCancelAnimationFrame
     window.cancelAnimationFrame(rafID)
-    // prepare(theBuffer);
     buildNotes()
     document.getElementById('live').innerHTML = 'Start Live Recording'
     buttonText = 'Start Live Recording'
@@ -268,10 +254,10 @@ async function startPitchDetect() {
       console.error(`${err.name}: ${err.message}`)
       alert('Stream generation failed.')
     })
-   
-    document.getElementById('live').innerHTML = 'Stop'
-    buttonText =  'Stop'
-    return 'stop'
+
+  document.getElementById('live').innerHTML = 'Stop'
+  buttonText = 'Stop'
+  return 'stop'
 }
 
 function getRhythm(index) {
@@ -283,8 +269,8 @@ function getRhythm(index) {
     return 'half/'
   }
 }
-function isRotate(note,octave){
-  const regular4 = ['C','D','E','F','G','A']
+function isRotate(note, octave) {
+  const regular4 = ['C', 'D', 'E', 'F', 'G', 'A']
   const regular3 = 'C'
   let res = true
   if (octave == 4) {
@@ -304,7 +290,7 @@ function pickSvg(note, octave, index) {
   let path = './img/notes/' + rhytm
   if (!rotate) {
     if (note.includes('C') && octave == 4) {
-      
+
       return path + 'lineNote.svg'
     }
     return path + 'note.svg'
@@ -366,80 +352,78 @@ function toggleLiveInput() {
   )
 }
 
-// var BPMDetector = require('./bpmDetector.js')
 function buildNotes() {
-    console.log('buildNotes')
-    if (currentContainerQuarter === null) {
-      currentContainerQuarter = document.getElementById('containerQuarter0')
-    }
-    let distance = 50
-    const isFlatArr = []
-    let quarterLeftSize=[]
-    let quarter, sharp, upperBar, lowerBar
-    notesArr.map((note) => {
-      console.log('note', note)
-      isFlatArr.push(note.toString().includes('#') ? 'sharp' : false)
-    })
-    pitchArr.map((note, i) => {
-      quarter = document.createElement('img')
-      let rotate = isRotate(notesArr[i], octaveArr[i])
-      if (isFlatArr[i] === 'sharp') {
-        sharp = document.createElement('img')
-        sharp.src = './img/flags/Sharp.svg'
-        let bottomPos = Number(noteToLocation(note, notesArr[i], octaveArr[i]))
-        !rotate ? (bottomPos -= 8) : (bottomPos += 20)
-        sharp.style.bottom = bottomPos + 'px'
-        sharp.style.position = 'absolute'
-        sharp.style.left = distance - 10 + 'px'
-        sharp.style.height = '30px'
-        if(parseInt(sharp.style.left)>1100){
-          quarterLeftSize.push(sharp)
-        }else{
+  console.log('buildNotes')
+  if (currentContainerQuarter === null) {
+    currentContainerQuarter = document.getElementById('containerQuarter0')
+  }
+  let distance = 50
+  const isFlatArr = []
+  let quarterLeftSize = []
+  let quarter, sharp, upperBar, lowerBar
+  notesArr.map((note) => {
+    console.log('note', note)
+    isFlatArr.push(note.toString().includes('#') ? 'sharp' : false)
+  })
+  pitchArr.map((note, i) => {
+    quarter = document.createElement('img')
+    let rotate = isRotate(notesArr[i], octaveArr[i])
+    if (isFlatArr[i] === 'sharp') {
+      sharp = document.createElement('img')
+      sharp.src = './img/flags/Sharp.svg'
+      let bottomPos = Number(noteToLocation(note, notesArr[i], octaveArr[i]))
+      !rotate ? (bottomPos -= 8) : (bottomPos += 20)
+      sharp.style.bottom = bottomPos + 'px'
+      sharp.style.position = 'absolute'
+      sharp.style.left = distance - 10 + 'px'
+      sharp.style.height = '30px'
+      if (parseInt(sharp.style.left) > 1100) {
+        quarterLeftSize.push(sharp)
+      } else {
         currentContainerQuarter.appendChild(sharp)
-        }
       }
-      quarter.src = pickSvg(notesArr[i], octaveArr[i], i)
-      quarter.style.bottom =
-        noteToLocation(note, notesArr[i], octaveArr[i]) + 'px'
-      quarter.style.position = 'absolute'
-      quarter.style.left = distance + 'px'
-      if(parseInt(quarter.style.left)>1100){
-        quarterLeftSize.push(quarter)
-      }else{
+    }
+    quarter.src = pickSvg(notesArr[i], octaveArr[i], i)
+    quarter.style.bottom =
+      noteToLocation(note, notesArr[i], octaveArr[i]) + 'px'
+    quarter.style.position = 'absolute'
+    quarter.style.left = distance + 'px'
+    if (parseInt(quarter.style.left) > 1100) {
+      quarterLeftSize.push(quarter)
+    } else {
       currentContainerQuarter.appendChild(quarter)
-      }
-      distance += 50
-      if (barFlag >= 4) {
-        upperBar = document.createElement('img')
-        lowerBar = document.createElement('img')
-        upperBar.src = './img/staff/barLine.svg'
-        lowerBar.src = './img/staff/barLine.svg'
-        upperBar.style.position = 'absolute'
-        lowerBar.style.position = 'absolute'
-        upperBar.style.bottom = '9px'
-        lowerBar.style.bottom = '-80px'
+    }
+    distance += 50
+    if (barFlag >= 4) {
+      upperBar = document.createElement('img')
+      lowerBar = document.createElement('img')
+      upperBar.src = './img/staff/barLine.svg'
+      lowerBar.src = './img/staff/barLine.svg'
+      upperBar.style.position = 'absolute'
+      lowerBar.style.position = 'absolute'
+      upperBar.style.bottom = '9px'
+      lowerBar.style.bottom = '-80px'
 
-        upperBar.style.left = distance + 'px'
-        lowerBar.style.left = distance + 'px'
-        if(parseInt(lowerBar.style.left)>1100 || parseInt(upperBar.style.left)>1100){
-          quarterLeftSize.push(lowerBar)
-          quarterLeftSize.push(upperBar)
-        }else{
+      upperBar.style.left = distance + 'px'
+      lowerBar.style.left = distance + 'px'
+      if (parseInt(lowerBar.style.left) > 1100 || parseInt(upperBar.style.left) > 1100) {
+        quarterLeftSize.push(lowerBar)
+        quarterLeftSize.push(upperBar)
+      } else {
         currentContainerQuarter.appendChild(lowerBar)
         currentContainerQuarter.appendChild(upperBar)
-        }
-        distance += 50
-        barFlag = 0
       }
-    })
-    console.log('quarterLeftSize',quarterLeftSize)
-    if(quarterLeftSize.length !=0 )
-    {
-      addMusicSheet(quarterLeftSize)
+      distance += 50
+      barFlag = 0
     }
-    sampleCounter = 0
-    howMany=0
+  })
+  console.log('quarterLeftSize', quarterLeftSize)
+  if (quarterLeftSize.length != 0) {
+    addMusicSheet(quarterLeftSize)
   }
+  sampleCounter = 0
+  howMany = 0
+}
 
 function togglePlayback() {
   if (isPlaying) {
@@ -452,7 +436,6 @@ function togglePlayback() {
     if (!window.cancelAnimationFrame)
       window.cancelAnimationFrame = window.webkitCancelAnimationFrame
     window.cancelAnimationFrame(rafID)
-    // prepare(theBuffer);
     buildNotes()
     console.log('notesarr', notesArr)
     console.log('howManyArr', howManyArr)
@@ -470,17 +453,12 @@ function togglePlayback() {
   analyser.fftSize = 1024
   sourceNode.connect(analyser)
   analyser.connect(audioContext.destination)
-  console.log('audioContext.destination',audioContext.destination)
+  console.log('audioContext.destination', audioContext.destination)
   sourceNode.start(0)
   isPlaying = true
   lastItem = false
   isLiveInput = false
   updatePitch()
-  // let audioEnd=true //for now for the notes wont be on each other
-  // if(audioEnd){
-  //   notesArr=[]
-  //   pitchArr=[]
-  // }
   document.getElementById('live').innerHTML = 'Stop'
   return 'stop'
 }
@@ -497,58 +475,55 @@ function createLineImgs() {
 let marginTop = 250
 let paddingTop = 50
 function addMusicSheet(muiscNoteAppend) {
-    imgArray = createLineImgs()
-    root = document.getElementById('root')
-    divCenter = document.createElement('div')
-    divCenter.className = 'center'
-    divCenter.style.marginTop = '180px'
-    divNotesContainer = document.createElement('div')
-    divNotesContainer.className = 'notes-container'
-    divLinesContainer = document.createElement('div')
-    divLinesContainer.className = 'lines-container'
-    divLinesContainer.style.marginTop = '50px'
-    divLinesContainer.style.marginBottom = '20px'
-    gClef = document.createElement('img')
-    gClef.className = 'GClefsvg'
-    gClef.src = './img/staff/G-clef.svg'
-    gClef.alt = 'GClef'
-    divContainerQuarter = document.createElement('div')
-    divContainerQuarter.id = 'containerQuarter' + amountContainerQuarter
-    amountContainerQuarter++
-    divLinesContainerSecondly = document.createElement('div')
-    divLinesContainerSecondly.className = 'lines-container'
-    divLinesContainerSecondly.style.marginTop = '20px'
-    divLinesContainerSecondly.style.marginBottom = '50px'
-    fClef = document.createElement('img')
-    fClef.className = 'FClefsvg'
-    fClef.src = './img/staff/FClef.svg'
-    fClef.alt = 'FClef'
+  imgArray = createLineImgs()
+  root = document.getElementById('root')
+  divCenter = document.createElement('div')
+  divCenter.className = 'center'
+  divCenter.style.marginTop = '180px'
+  divNotesContainer = document.createElement('div')
+  divNotesContainer.className = 'notes-container'
+  divLinesContainer = document.createElement('div')
+  divLinesContainer.className = 'lines-container'
+  divLinesContainer.style.marginTop = '50px'
+  divLinesContainer.style.marginBottom = '20px'
+  gClef = document.createElement('img')
+  gClef.className = 'GClefsvg'
+  gClef.src = './img/staff/G-clef.svg'
+  gClef.alt = 'GClef'
+  divContainerQuarter = document.createElement('div')
+  divContainerQuarter.id = 'containerQuarter' + amountContainerQuarter
+  amountContainerQuarter++
+  divLinesContainerSecondly = document.createElement('div')
+  divLinesContainerSecondly.className = 'lines-container'
+  divLinesContainerSecondly.style.marginTop = '20px'
+  divLinesContainerSecondly.style.marginBottom = '50px'
+  fClef = document.createElement('img')
+  fClef.className = 'FClefsvg'
+  fClef.src = './img/staff/FClef.svg'
+  fClef.alt = 'FClef'
 
-    root.appendChild(divCenter)
-    divCenter.appendChild(divNotesContainer)
-    divNotesContainer.appendChild(divLinesContainer)
+  root.appendChild(divCenter)
+  divCenter.appendChild(divNotesContainer)
+  divNotesContainer.appendChild(divLinesContainer)
 
-    divLinesContainer.appendChild(gClef)
-    for (let i = 0; i < 5; i++) {
-      //TODO : the foreach below doesn't work properly'
-      img = document.createElement('img')
-      img.className = 'line'
-      img.src = './img/staff/VerticalLine.svg'
-      img.alt = 'Vertical Line'
-      divLinesContainer.appendChild(img)
-    }
-    divLinesContainer.appendChild(divContainerQuarter)
-    // imgArray.forEach((item)=>{
-    //   divLinesContainer.appendChild(item);
-    // });
+  divLinesContainer.appendChild(gClef)
+  for (let i = 0; i < 5; i++) {
+    //TODO : the foreach below doesn't work properly'
+    img = document.createElement('img')
+    img.className = 'line'
+    img.src = './img/staff/VerticalLine.svg'
+    img.alt = 'Vertical Line'
+    divLinesContainer.appendChild(img)
+  }
+  divLinesContainer.appendChild(divContainerQuarter)
 
-    divNotesContainer.appendChild(divLinesContainerSecondly)
-    divLinesContainerSecondly.appendChild(fClef)
-    imgArray.forEach((item) => {
-      divLinesContainerSecondly.appendChild(item)
-    }) 
-    currentContainerQuarter=divContainerQuarter
-    appdedNotes(muiscNoteAppend)
+  divNotesContainer.appendChild(divLinesContainerSecondly)
+  divLinesContainerSecondly.appendChild(fClef)
+  imgArray.forEach((item) => {
+    divLinesContainerSecondly.appendChild(item)
+  })
+  currentContainerQuarter = divContainerQuarter
+  appdedNotes(muiscNoteAppend)
 }
 let distance = 50
 function appdedNotes(muiscNoteAppend) {
@@ -557,7 +532,7 @@ function appdedNotes(muiscNoteAppend) {
       item.style.left = distance - 10 + 'px'
       currentContainerQuarter.appendChild(item)
     }
-    if(item.src.includes("quarter") || item.src.includes("half")) {
+    if (item.src.includes("quarter") || item.src.includes("half")) {
       item.style.left = distance + 'px'
       distance += 50
       currentContainerQuarter.appendChild(item)
@@ -656,25 +631,25 @@ function updatePitch(time) {
   var ac = autoCorrelate(buf, audioContext.sampleRate)
   const noteEl = document.getElementById('correctNote2')
   const middle = Math.round(onlyNotes.length / 2)
-  if(correctIndex === middle) {
+  if (correctIndex === middle) {
     window.scrollTo(document.body.scrollWidth / 2, 0);
     const gridItem = document.getElementById('gridItem')
     gridItem.style.justifyContent = 'end';
   }
-  if (onlyNotes.length === correctIndex){
+  if (onlyNotes.length === correctIndex) {
     const finish = document.createElement('h1');
     finish.innerText = `You played ${greenNotes}\/${greenNotes + redNotes} correct Notes `
-    buttons.insertBefore(finish,buttons.firstChild)
+    buttons.insertBefore(finish, buttons.firstChild)
     return;
   }
-  if(onlyNotes[correctIndex].note === 'rest' || onlyNotes[correctIndex].note === 'barline'){
+  if (onlyNotes[correctIndex].note === 'rest' || onlyNotes[correctIndex].note === 'barline') {
     noteEl.textContent = '--'
     correctIndex++;
   }
-  if (onlyNotes.length === correctIndex){
+  if (onlyNotes.length === correctIndex) {
     const finish = document.createElement('h1');
     finish.innerText = `You played ${greenNotes}\/${greenNotes + redNotes} correct Notes `
-    buttons.insertBefore(finish,buttons.firstChild)
+    buttons.insertBefore(finish, buttons.firstChild)
     return;
   }
   noteEl.textContent = onlyNotes[correctIndex].note;
@@ -704,43 +679,39 @@ function updatePitch(time) {
   //   waveCanvas.stroke()
   // }
 
-  // console.log('howMany',howMany)
   if (ac == -1) {
     setTimeout(() => {
       if (
-        // prevNote != null
-        //  && noteElem.innerText !== '-'
-          // && 
-          prevNoteOctave > 1 && prevNoteOctave < 6 &&
-          sampleCounter > 20
-          ) {
+        prevNoteOctave > 1 && prevNoteOctave < 6 &&
+        sampleCounter > 20
+      ) {
         console.log("inside ac =-1")
         notesArr.push(prevNote);
         pitchArr.push(prevPitch)
         octaveArr.push(prevNoteOctave)
         sampleCounters.push(sampleCounter)
         howManyArr.push(howMany)
-         if(index >= notesLength){
-         return 
+        if (index >= notesLength) {
+          return
         }
-        let element = document.getElementById(index) 
+        let element = document.getElementById(index)
         correctIndex++;
-        if(prevNote+prevNoteOctave !== element.getAttribute('note')){
+        if (prevNote + prevNoteOctave !== element.getAttribute('note')) {
           element.style.backgroundColor = 'red';
           redNotes++;
         }
-        else{
-        element.style.backgroundColor = 'green';
-        greenNotes++;
+        else {
+          element.style.backgroundColor = 'green';
+          greenNotes++;
         }
         index++;
-        for(let i=index;i<notesLength;i++){
+        for (let i = index; i < notesLength; i++) {
           element = document.getElementById(i)
-          if(element.src.includes('rest')){
+          if (element.src.includes('rest')) {
             element.style.backgroundColor = 'green';
             index++;
           }
-          else{
+          else {
             break;
           }
 
@@ -749,15 +720,15 @@ function updatePitch(time) {
         prevNote = null;
         howMany = 0;
       }
-      else if (prevNote == null || notesArr.length==0) {
+      else if (prevNote == null || notesArr.length == 0) {
         howMany = 0;
       }
       else {
-        
-          howMany++
-          sampleCounter++
 
-        
+        howMany++
+        sampleCounter++
+
+
       }
     }, 20)
     detectorElem.className = 'vague'
@@ -774,7 +745,7 @@ function updatePitch(time) {
     let noteOctave = Math.floor(note / 12) - 1
     noteElem.innerHTML = noteStrings[note % 12] + noteOctave
 
-    if(prevNote !== noteStrings[note % 12] && sampleCounter > 20 && prevNoteOctave > 1 && prevNoteOctave < 6 ) {
+    if (prevNote !== noteStrings[note % 12] && sampleCounter > 20 && prevNoteOctave > 1 && prevNoteOctave < 6) {
       console.log("insida if")
       notesArr.push(prevNote);
       pitchArr.push(prevPitch)
@@ -782,19 +753,14 @@ function updatePitch(time) {
       sampleCounters.push(sampleCounter)
       howManyArr.push(howMany)
     }
-      
-    if (prevNote == noteStrings[note % 12] && noteOctave > 1 && noteOctave < 6){ //|| notesArr == [] ){
+
+    if (prevNote == noteStrings[note % 12] && noteOctave > 1 && noteOctave < 6) { //|| notesArr == [] ){
       sampleCounter++
       howMany++;
     }
-    // else{
-    // sampleCounter++;
-    // }
     prevPitch = note
     prevNoteOctave = noteOctave
     prevNote = noteStrings[note % 12]
-    
-    // console.log(noteOctave)
 
     var detune = centsOffFromPitch(pitch, note)
     if (detune == 0) {
@@ -871,16 +837,15 @@ function process(e) {
   console.log(mean)
   if (tempoCounts.length) {
     console.log(tempoCounts[0].tempo)
-    //   output.innerHTML = tempoCounts[0].tempo;
   }
 }
 
 
 function getPeaksAtThreshold(data, threshold) {
-  // console.log(`enter getPeaksAtThreshold data:${data} threshold:${threshold}`);
+
   var peaksArray = []
   var length = data.length
-  for (var i = 0; i < length; ) {
+  for (var i = 0; i < length;) {
     if (data[i] > threshold) {
       peaksArray.push(i)
       // Skip forward ~ 1/4s to get past this peak.
@@ -892,7 +857,6 @@ function getPeaksAtThreshold(data, threshold) {
 }
 
 function countIntervalsBetweenNearbyPeaks(peaks) {
-  // console.log(`enter countIntervalsBetweenNearbyPeaks peaks: ${peaks}`)
   var intervalCounts = []
   peaks.forEach(function (peak, index) {
     for (var i = 0; i < 10; i++) {
@@ -913,7 +877,6 @@ function countIntervalsBetweenNearbyPeaks(peaks) {
 }
 
 function groupNeighborsByTempo(intervalCounts) {
-  // console.log(`enter groupNeighborsByTempo intervalCounts: ${intervalCounts}`)
   var tempoCounts = []
   intervalCounts.forEach(function (intervalCount) {
     //Convert an interval to tempo
@@ -979,13 +942,13 @@ function openFile(file) {
   };
 
   reader.readAsDataURL(input.files[0]);
- 
-  output.onload = function() {
+
+  output.onload = function () {
     const canvas = document.getElementById("cropCanvas");
     const ctx = canvas.getContext("2d");
     const backupCanvas = document.getElementById("backupCanvas");
     const backupCtx = backupCanvas.getContext("2d");
-    
+
     const width = output.width;
     const height = output.height;
     backupCanvas.width = width;
@@ -1013,23 +976,22 @@ function openFile(file) {
     ctx.drawImage(output, 0, 0, newWidth, newHeight);
     ctx.save();
     output.hidden = true
-}
+  }
 
   reader.onloadend = async function () {
     output.src = reader.result;
     console.log("end")
-   
+
     encodedData = reader.result
-    // console.log(reader.result)
     localStorage.setItem('image', reader.result)
-    
+
     const buttons = document.querySelector('#buttons')
     const loading = document.createElement('h1')
-    loading.textContent = 'Loading...' 
-    buttons.insertBefore(loading,buttons.firstChild)
+    loading.textContent = 'Loading...'
+    buttons.insertBefore(loading, buttons.firstChild)
     const isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1;
-    if (isAndroid){
-      res = await fetch('http://d4e9-77-137-194-196.ngrok.io/predict', {
+    if (isAndroid) {
+      res = await fetch('http://ff7a-77-137-194-196.ngrok.io/predict', {
         "method": "POST",
         "body": encodedData,
       })
@@ -1059,11 +1021,11 @@ function openFile(file) {
     input.type = "submit"
     input.value = "go to midi page"
     input.className = 'button-black'
-    form.className='button-black'
+    form.className = 'button-black'
     form.appendChild(input)
     buttons.removeChild(loading)
-    buttons.insertBefore(form,buttons.firstChild)
+    buttons.insertBefore(form, buttons.firstChild)
 
   }
-  
+
 };
